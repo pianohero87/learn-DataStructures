@@ -1,11 +1,10 @@
 //Derrick Wong
 //CS 41: Data Structures
-//28 November 2015
+//19 December 2015
 //Assignment 4
 package borginterpreter;
 
 import java.io.*;
-import java.util.*;
 import java.util.Scanner;
 
 public class BorgInterpreter {
@@ -15,129 +14,6 @@ public class BorgInterpreter {
         public static final int SIZE = 27; // default size of hash is 27   
         public Scanner scan;
         HashTable current;
-
-        public static class HashTable {
-
-            Node array[] = new Node[SIZE];
-            public HashTable next;
-
-            private class Node {
-
-                Node next = null;
-                String varName = "";
-                int var = -1;
-
-                Node(String varName, int var) {
-                    this.varName = varName;
-                    this.var = var;
-                    next = null;
-                }
-            }
-
-            public int hash(String variableName) {
-                char[] convert = variableName.toCharArray();
-                int ordinalSum = 0;
-
-                for (int i = 0; i < convert.length; i++) {
-                    ordinalSum += (i + 1) * ((int) convert[i]); // type cast char to int
-                }
-                return ordinalSum % SIZE;
-            }
-
-            public void add(Object o) {
-                int i = hash(o.name);                
-                Node newNode = new Node(o.name, o.value); // linked list probing
-                if (array[i] != null) {
-                    array[i].next = newNode;
-                } else {
-                    array[i] = newNode;
-                }
-            }
-
-            public int getValue(String variableName, HashTable current) {
-                int i = hash(variableName);
-                HashTable currentHash = current;
-                Node front = array[i];
-                while (currentHash != null) // hash
-                {
-                    while (front != null) // list
-                    {
-                        if (front.varName.equals(variableName)) {
-                            if (front.var == -1) {
-                                // variable was not initialized                  
-                                return 0;
-                            } else {
-                                return front.var;
-                            }
-                        } else {
-                            front = front.next;
-                        }
-                    }
-
-                    currentHash = currentHash.next;
-                }
-                return 0; // if key not found
-            }
-
-            public String getName(String variableName, HashTable current) {
-                int i = hash(variableName);
-                HashTable currentHash = current;
-                Node front = array[i];
-                while (current != null) // hash
-                {
-                    while (front != null) // list
-                    {
-                        if (front.varName.equals(variableName)) {
-
-                            return front.varName;
-                        } else {
-                            front = front.next;
-                        }
-                    }
-
-                    current = current.next;
-                }
-                return ""; // if key not found
-            }
-
-            public boolean isExist(String variableName, HashTable current) {
-                int i = hash(variableName);
-                HashTable currentHash = current;
-                Node front = array[i];
-                while (currentHash != null) {
-                    while (front != null) {
-                        if (front.varName.equals(variableName)) {
-                            return true;
-                        } else {
-                            current = current.next;
-                        }
-                    }
-                    currentHash = currentHash.next;
-                }
-                return false;
-            }
-
-            public void modify(String variableName, int var, HashTable current) {                
-                int i = hash(variableName);
-                HashTable currentHash = current;
-                Node front = array[i];
-                while (currentHash != null) {
-                    //System.out.println("enter the while loop1");
-                    while (front != null) {
-                        //System.out.println("enter the while loop2");
-                        if (front.varName.equals(variableName)) {
-                            front.var = var;
-                            //System.out.println("modified the value: " + array[i].var);                            
-                            break;
-                        } else {
-                            front = front.next;
-                        }
-                    }
-                    currentHash = currentHash.next;
-                    //System.out.println("current is now null");
-                }
-            }
-        }
 
         //object class to pass in to our hash functions
         public class Object {
@@ -171,6 +47,8 @@ public class BorgInterpreter {
                     return true;
                 case "%":
                     return true;
+                case "^":
+                    return true;
                 default:
                     return false;
             }
@@ -188,6 +66,8 @@ public class BorgInterpreter {
                     return operand1 / operand2;
                 case "%":
                     return operand1 % operand2;
+                case "^":                                      
+                    return (int)Math.pow(operand1, operand2);
                 default:
                     return operand1;
             }
@@ -223,7 +103,7 @@ public class BorgInterpreter {
                 File file = new File("borg.txt");
                 scan = new Scanner(file);
             } catch (Exception e) {
-                System.out.println("FILE NOT FOUND");
+                throw new RuntimeException("FILE NOT FOUND");
             }
         }
 
@@ -231,36 +111,28 @@ public class BorgInterpreter {
         {
             int lineNumber = 1;
 
-            while (scan.hasNextLine()) {
-                System.out.print(lineNumber + "\t");
-                //parse each line
+            while (scan.hasNextLine()) {                                
                 String line = scan.nextLine();
                 Scanner scanLine = new Scanner(line);
 
                 if (line.equals("")) {
-                    lineNumber++;
-                    System.out.println("empty");
+                    lineNumber++;                    
                 } else {
                     String token = scanLine.next();
                     if (token.equals("COM")) // comment
                     {
-                        lineNumber++;
-                        System.out.println("comment");
+                        lineNumber++;                        
                     } else if (token.equals("START")) // maintaining the stack with START AND FINISH
-                    {
-                        //create new hash
-                        lineNumber++;
-                        System.out.println("Start");
+                    {                        
+                        lineNumber++;                        
                         HashTable previous = current;
                         current = new HashTable();
                         current.next = previous;
                     } else if (token.equals("FINISH")) {
-                        lineNumber++;
-                        System.out.println("Finish");
+                        lineNumber++;                        
                         current = current.next;
                     } else if (token.equals("VAR")) {
-                        lineNumber++;
-                        System.out.println("Var");
+                        lineNumber++;                      
                         String variable = scanLine.next(); // this is the variable name.                
                         int value = 0; // initialize variable's value to 0
 
@@ -294,15 +166,13 @@ public class BorgInterpreter {
                                 }
 
                             }
-                        }
-                        //System.out.print(variable + " " + value);
+                        }                        
                         Object o = new Object(variable, value);
                         current.add(o);
                     } // conditions for ++ and -- int x = ++i; int x = i++; x++, ++x etc
                     else if (token.equals("PRINT")) {
                         lineNumber++;
-                        boolean print = true;
-                        System.out.println("Print");
+                        boolean print = true;                       
                         int value = 0;
                         String variable = "";
 
@@ -340,14 +210,9 @@ public class BorgInterpreter {
 
                                     }
                                 } else {
-                                    variable = str;
-                                    //System.out.println(variable);                                    
-                                    System.out.println(current.isExist(variable, current));
+                                    variable = str;                                                                        
                                     if (current.isExist(variable, current)) {
-                                        value = current.getValue(str, current);
-                                        //System.out.println("derp");
-                                        System.out.println(value);
-
+                                        value = current.getValue(str, current);                                                                                
                                     } else {
                                         System.out.println("LINE " + (lineNumber - 1) + ": ERROR. " + variable + " NOT DEFINED.");
                                         print = false;
@@ -361,62 +226,55 @@ public class BorgInterpreter {
 
                     } else // if stand-alone variable is called on the line
                     {
-                        lineNumber++;
-                        System.out.println("Lonely");
+                        lineNumber++;                        
                         int value = 0;
                         String variable = "";
-                        String str = token;   // could be ++ if (++ boramir)
+                        String str = token;   // could be ++ if (++ boramir)                                                
                         while (scanLine.hasNext()) {
                             String modifier = scanLine.next();
-                            if (modifier.equals("=")) {
+                            if (modifier.equals("=")) {                                
                                 while (scanLine.hasNext()) {
                                     if (scanLine.hasNextInt()) // if the token is an int
                                     {
                                         value = scanLine.nextInt();
-                                    } else // if the token is a String
+                                    } else 
                                     {
-                                        // POSSIBLE CONDITIONS:
-                                        // operator
-                                        // a variable name
-                                        //String str2 = scanLine.next();
-                                        if (isOperator(modifier)) // operator
+                                        String str2 = scanLine.next();                                        
+                                        if (isOperator(str2)) 
                                         {
-                                            if (scanLine.hasNextInt()) // if token after operator is an int
+                                            if (scanLine.hasNextInt())
                                             {
                                                 int operand = scanLine.nextInt();
-                                                value = operate(modifier, value, operand); // call operate function
-                                            } else // if token after operator is a variable name
+                                                value = operate(str2, value, operand); 
+                                            } else
                                             {
-                                                value = operate(modifier, value, current.getValue(modifier, current));
+                                                String str3 = scanLine.next();                                                
+                                                value = operate(str2, value, current.getValue(str3, current));                                                
                                             }
-                                        } else // variable name (not a int nor an operator) 
+                                        } else 
                                         {
-                                            value = current.getValue(str, current);
+                                            value = current.getValue(str2, current);
                                         }
                                     }
+                                    variable = str;
                                 }
                             } else if (isUnary(modifier)) {
                                 if (scanLine.hasNext()) {
                                     variable = scanLine.next();
                                     value = unaryOperate(str, current.getValue(variable, current));
-                                } else // boramir ++
+                                } else 
                                 {
                                     variable = token;
                                     value = unaryOperate(modifier, current.getValue(variable, current));
-                                    //System.out.println(value + "\thi");
                                 }
-                            } else // token is a variabe
+                            } else
                             {
                                 variable = str;
                                 value = current.getValue(str, current);
                             }
 
                         }
-                        //System.out.println(value + "\tbye");
                         current.modify(variable, value, current);
-                        //System.out.println(current.getName(variable, current));
-                        // if these two pass, it means that the modify function is not working properly
-                        //System.out.println("hi" + current.getValue(variable, current));
                     }
                 }
             }
@@ -425,23 +283,13 @@ public class BorgInterpreter {
 
     }
 
-    public static void main(String[] args) {
-        // open file
-        // parse each line
-        // scanner each token
+    public static void main(String[] args) {       
         Borg borg = new Borg();
         borg.openFile();
         borg.readFile();
-        /* 
-         Scanner scanner = new Scanner(System.in);
+
         
         
-         String line = scanner.next();
-         Scanner scanner2 = new Scanner(line);
-         if(scanner2.next().equals("hi"))
-         {
-         System.out.println("ok");
-         }
-         */
+
     }
 }
